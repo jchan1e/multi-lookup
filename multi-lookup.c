@@ -39,7 +39,7 @@ int main(int argc, char* argv[]){
 
 	/* Local Vars */
 	FILE* outputfp = NULL;
-	int num_cores = /*get_nprocs()*/ 4;
+	int num_cores = /*get_nprocs()*/ 8;
 
 	/* Check Arguments */
 	if(argc < MINARGS){
@@ -76,6 +76,8 @@ int main(int argc, char* argv[]){
 		args->filename = filename[i];
 		pthread_create(&threads[i], NULL, &request, args);
 	}
+
+	/* spin up resolver threds */
 
 	rarg* arg = malloc(sizeof(rarg));
 	arg->q = &q;
@@ -155,7 +157,7 @@ void* resolve(void *arg)
 	char* domain = NULL;
 	char ipstr[INET6_ADDRSTRLEN];
 
-	while(!q->readOnly || !queue_is_empty(q))
+	while(!q->readOnly)
 	{
 		pthread_mutex_lock(&mPop); printf("POP lock %s\n", domain);
 		pthread_mutex_lock(&mQueue); printf("QUEUE lock %s\n", domain);
@@ -178,16 +180,35 @@ void* resolve(void *arg)
 		pthread_mutex_unlock(&mQueue); printf("QUEUE unlock %s\n", domain);
 		pthread_mutex_unlock(&mPop); printf("POP unlock %s\n", domain);
 
-		if (dnslookup(domain, ipstr, sizeof(ipstr)) == UTIL_FAILURE)
-			fprintf(stderr, "dnslookup error: %s\n", domain);
-		strncpy(ipstr, "", sizeof(ipstr));
-		
-		pthread_mutex_lock(&mOut);
-		fprintf(output, "%s, %s\n", domain, ipstr);
-		pthread_mutex_unlock(&mOut);
+//		if (dnslookup(domain, ipstr, sizeof(ipstr)) == UTIL_FAILURE)
+//			fprintf(stderr, "dnslookup error: %s\n", domain);
+//		strncpy(ipstr, "", sizeof(ipstr));
+//		
+//		pthread_mutex_lock(&mOut);
+//		fprintf(output, "%s, %s\n", domain, ipstr);
+//		pthread_mutex_unlock(&mOut);
+
+		printf("%s\n", domain);
 
 		free(domain);
 	}
+	printf("Hey, the queue's read-only now!\n");
+	int m = 1;
+	while(!m)
+	{
+		pthread_mutex_lock(&mPop);
+		pthread_mutex_lock(&mQueue);
+		m = queue_is_empty(q);
+		if (!m)
+			domain = queue_pop(q);
+		pthread_mutex_unlock(&mQueue);
+		pthread_mutex_unlock(&mPop);
+
+		printf("%s\n", domain);
+		free(domain);
+	}
+
+
 	printf("resolver exiting %s\n", domain);
 	pthread_exit(NULL);
 }
