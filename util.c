@@ -71,12 +71,16 @@ int dnslookup(const char* hostname, char* firstIPstr, int maxSize){
 		/* Save First IP Address */
 		if(result==headresult){
 			strncpy(firstIPstr, ipstr, maxSize);
-			firstIPstr[maxSize-1] = '\0';
 		}
+		else{
+			strcat(firstIPstr, ",");
+			strcat(firstIPstr, ipstr);
+		}
+		firstIPstr[maxSize-1] = '\0';
 	}
 
 	/* Cleanup */
-freeaddrinfo(headresult);
+	freeaddrinfo(headresult);
 
-return UTIL_SUCCESS;
+	return UTIL_SUCCESS;
 }

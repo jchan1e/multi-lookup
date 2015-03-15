@@ -31,6 +31,7 @@ typedef struct queue_s{
     int front;
     int rear;
     int maxSize;
+	 int readOnly;
 } queue;
 
 /* Function to initilze a new queue

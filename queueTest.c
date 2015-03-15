@@ -154,6 +154,11 @@ int main(int argc, char* argv[]){
 		" NULL when empty!\n");
 	}
 
+	/* Test that push fails on readonly mode */
+	q.readOnly = 1;
+	if(queue_push(&q, payload_in[0]) != QUEUE_FAILURE)
+		fprintf(stderr, "yo dawg, readonly ain't workin'. Shit's broke, yo.");
+
 	/* Cleanup Queue */
 	queue_cleanup(&q);
 
